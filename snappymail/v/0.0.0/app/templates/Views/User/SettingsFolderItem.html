@@ -1,4 +1,4 @@
-<tr data-bind="css: { 'selectable': selectable, 'system': isSystemFolder }">
+<tr draggable="true" data-bind="css: { 'selectable': selectable, 'system': isSystemFolder }, event: { 'dragstart': $root.onDragStart, 'dragend': $root.onDragEnd }">
 	<td data-bind="css: 'deep-' + deep">
 		<span class="folder-name" data-bind="text: name, visible: !editing(), css: { 'can-be-edited': canBeEdited },
 			click: edit,

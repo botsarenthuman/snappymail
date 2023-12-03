@@ -2,6 +2,7 @@ import ko from 'ko';
 
 import { Notifications } from 'Common/Enums';
 import { FolderMetadataKeys } from 'Common/EnumsUser';
+import { addEventsListeners } from 'Common/Globals';
 import { getNotification } from 'Common/Translator';
 
 import { getFolderFromCacheList, removeFolderFromCacheList } from 'Common/Cache';
@@ -61,6 +62,77 @@ export class UserSettingsFolders /*extends AbstractViewSettings*/ {
 	onBuild(oDom) {
 	}
 */
+
+	/**
+	 * @param {FolderModel} folder
+	 * @param {*} event
+	 */
+	onDragStart(folder, event) {
+		let element = event.target,
+			parent = element.parentNode;
+		this.dragData = {
+			action: 'RENAME',
+			folder: folder,
+			element: element
+		};
+//		event.dataTransfer.setData(rlContentType, 'RENAME');
+		event.dataTransfer.setData('text/plain', 'snappymail/folder/RENAME');
+		event.dataTransfer.setDragImage(element, 0, 0);
+		event.dataTransfer.effectAllowed = 'move';
+		setTimeout(() => element.style.opacity = 0.25, 100);
+
+		if (!parent.sortable) {
+			parent.sortable = true;
+			const fnHover = e => {
+				const dragData = this.dragData;
+				if (dragData) {
+					e.preventDefault();
+					let node = (e.target.closest ? e.target : e.target.parentNode).closest('[draggable]');
+					if (node && node !== dragData.element && parent.contains(node)) {
+						let rect = node.getBoundingClientRect();
+						if (rect.top + (rect.height / 2) <= e.clientY) {
+							if (node.nextElementSibling !== dragData.element) {
+								node.after(dragData.element);
+							}
+						} else if (node.previousElementSibling !== dragData.element) {
+							node.before(dragData.element);
+						}
+						// class="deep-N"
+					}
+				}
+			};
+			addEventsListeners(parent, {
+				dragenter: fnHover,
+				dragover: fnHover,
+				drop: e => {
+					const dragData = this.dragData;
+					if (dragData) {
+						e.preventDefault();
+/*
+						let data = ko.dataFor(dragData.element),
+							from = options.list.indexOf(data),
+							to = [...parent.children].indexOf(dragData.element);
+						if (from != to) {
+							let arr = options.list();
+							arr.splice(to, 0, ...arr.splice(from, 1));
+							options.list(arr);
+						}
+						this.dragData = null;
+						options.afterMove?.();
+*/
+					}
+				}
+			});
+		}
+
+		return true;
+	}
+
+	onDragEnd() {
+		event.target.style.opacity = null;
+		this.dragData = null;
+	}
+
 	createFolder() {
 		showScreenPopup(FolderCreatePopupView);
 	}
